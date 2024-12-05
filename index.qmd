@@ -1,0 +1,239 @@
+---
+message: false
+execute: 
+  warning: false
+---
+
+## Data Import
+
+
+
+
+```{r}
+library(sf)
+library(ggplot2)
+library(forcats)
+library(dplyr)
+library(zoo)
+library(tmap)
+library(rpart)
+library(rpart.plot)
+
+full_dataset <- read_sf("data/tracks_1.gpkg", "training") |> 
+  mutate(data = "training")
+testing_dataset <- read_sf("data/tracks_1.gpkg", "testing") |> 
+  mutate(data = "testing")
+
+
+full_dataset <- bind_rows(full_dataset, testing_dataset)
+
+
+
+# users_samp <- sample(unique(full_dataset$user_id), 2)
+users_samp <- c(126, 64)
+```
+
+
+Let's visualize the data as a map. Since we have a lot of data, we will only show a subset of the data (2 Users, `r paste(users_samp, collapse = " and ")`)
+
+```{r}
+
+tmap_mode("plot")
+full_dataset |> 
+  filter(user_id %in% users_samp) |>
+  tm_shape()+ tm_dots(fill = "mode")
+
+
+```
+
+
+
+## Feature engineering
+
+
+Let's calculate a very simple feature: The speed in between consecutive points.
+
+:::{.callout-warning}
+
+## Theorie
+
+- How fast is a cow
+- Movement parameters
+- Sampling interval
+
+:::
+
+```{r}
+full_dataset <- full_dataset |> 
+  mutate(
+    steplength = as.numeric(st_distance(lead(geom), geom, by_element = TRUE)),
+    timelag = as.numeric(difftime(lead(datetime), datetime, units = "secs")),
+    speed = steplength / timelag,
+    .by = track_id
+  )
+```
+
+How does the *average* track speed differ between the different transportation modes?
+
+:::{.callout-warning}
+
+
+## Theorie
+
+
+- Measurements of individual samples vs. aggregated measurements
+
+:::
+
+
+```{r}
+full_dataset |> 
+  st_drop_geometry() |> 
+  summarise(
+    speed = mean(speed, na.rm = TRUE),
+    .by = c(mode, track_id)
+  ) |> 
+  mutate(
+    mode = fct_reorder(mode, speed)
+  ) |> 
+  ggplot() +
+  geom_boxplot(aes(speed, mode, fill = mode)) +
+  theme(legend.position = "none")
+
+
+```
+
+
+How does the *maximum* track speed differ between the different transportation modes?
+
+```{r}
+full_dataset |> 
+  st_drop_geometry() |> 
+  summarise(
+    speed = max(speed, na.rm = TRUE),
+    .by = c(mode, track_id)
+  ) |> 
+  mutate(
+    mode = fct_reorder(mode, speed)
+  ) |> 
+  ggplot() +
+  geom_boxplot(aes(speed, mode, fill = mode)) +
+  theme(legend.position = "none")
+
+
+```
+
+
+
+Let's calculate *sinuosity* as the ratio of the full distance to the straight distance between two points. Values above 1 indicate that the path is longer than the straight distance, values close to 1 indicate a straight path.
+
+:::{.callout-warning}
+
+## Theorie
+
+- Sinuosity
+- Rolling Window Functions / Moving Window
+
+:::
+
+```{r}
+
+full_dataset <- full_dataset |> 
+  mutate(
+    straight_dist5 = as.numeric(st_distance(lead(geom, 5), geom, by_element = TRUE)),
+    full_dist5 = rollsum(steplength, 5, fill = NA, align = "left", ),
+    sinuosity = full_dist5/straight_dist5,
+    .by = track_id
+  )
+
+```
+
+
+How does the average sinuosity differ between the different transportation modes?
+
+```{r}
+full_dataset |> 
+  st_drop_geometry() |> 
+  summarise(
+    sinuosity = mean(sinuosity, na.rm = TRUE),
+    .by = c(mode, track_id)
+  ) |> 
+  mutate(
+    mode = fct_reorder(mode, sinuosity)
+  ) |> 
+  ggplot() +
+  geom_boxplot(aes(sinuosity, mode, fill = mode)) +
+  theme(legend.position = "none")
+
+```
+
+
+
+## Training a model
+
+
+Let's build a simple CART model with our features
+
+```{r}
+
+# first, aggregate the data per track_id
+
+mean2 <- \(x) mean(x, na.rm = TRUE)
+max2 <- \(x) max(x, na.rm = TRUE)
+min2 <- \(x) min(x, na.rm = TRUE)
+# list(mean = ~mean(.x, na.rm = TRUE), max = ~max(.x, na.rm = TRUE), min ~min(.x, na.rm = TRUE))
+tracks_smry <- full_dataset |> 
+  st_drop_geometry() |> 
+  select(data, track_id, mode, steplength, timelag, speed, sinuosity) |> 
+  group_by(data, track_id, mode) |> 
+  summarise(
+    across(everything(), list(mean = mean2, max = max2, min = min2)),
+  ) |> 
+  mutate(
+    mode = factor(mode)
+  ) |> 
+  ungroup() |> 
+  select(-track_id)
+
+
+
+
+# next, split training and testing
+tracks_training <- tracks_smry |> 
+  filter(data == "training") |> 
+  select(-data)
+
+tracks_testing <- tracks_smry |> 
+  filter(data == "testing") |> 
+  select(-data)
+
+
+# build the model
+cart_model <- rpart(mode~., data = tracks_training, method = "class")
+```
+
+
+```{r}
+#| column: page
+rpart.plot(cart_model, type = 2)
+
+```
+
+
+## Evaluating the model
+
+
+```{r}
+
+predictions <- predict(cart_model, tracks_testing) 
+
+tracks_testing$prediction <- colnames(predictions)[apply(predictions, 1, which.max)]
+
+tracks_testing$prediction <- factor(tracks_testing$prediction)
+
+tracks_testing$mode <- factor(tracks_testing$mode, levels = sort(unique(as.character(tracks_testing$mode))))
+
+table(tracks_testing$mode, tracks_testing$prediction)
+
+```
+
