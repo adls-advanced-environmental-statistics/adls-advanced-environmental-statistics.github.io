@@ -182,7 +182,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#step-1-load-necessary-libraries" id="toc-step-1-load-necessary-libraries" class="nav-link active" data-scroll-target="#step-1-load-necessary-libraries"><span class="header-section-number">3.1</span> Step 1: Load necessary libraries</a></li>
   <li><a href="#step-2-load-the-data" id="toc-step-2-load-the-data" class="nav-link" data-scroll-target="#step-2-load-the-data"><span class="header-section-number">3.2</span> Step 2: Load the data</a></li>
-  <li><a href="#step-3-feature-engineering" id="toc-step-3-feature-engineering" class="nav-link" data-scroll-target="#step-3-feature-engineering"><span class="header-section-number">3.3</span> Step 3: Feature engineering</a></li>
+  <li><a href="#step-3-feature-engineering" id="toc-step-3-feature-engineering" class="nav-link" data-scroll-target="#step-3-feature-engineering"><span class="header-section-number">3.3</span> Step 3: Feature engineering</a>
+  <ul class="collapse">
+  <li><a href="#speed" id="toc-speed" class="nav-link" data-scroll-target="#speed"><span class="header-section-number">3.3.1</span> Speed</a></li>
+  <li><a href="#acceleration" id="toc-acceleration" class="nav-link" data-scroll-target="#acceleration"><span class="header-section-number">3.3.2</span> Acceleration</a></li>
+  <li><a href="#sinuosity" id="toc-sinuosity" class="nav-link" data-scroll-target="#sinuosity"><span class="header-section-number">3.3.3</span> Sinuosity</a></li>
+  </ul></li>
   <li><a href="#step-4-training-a-model" id="toc-step-4-training-a-model" class="nav-link" data-scroll-target="#step-4-training-a-model"><span class="header-section-number">3.4</span> Step 4: Training a model</a></li>
   <li><a href="#step-5-evaluating-the-model" id="toc-step-5-evaluating-the-model" class="nav-link" data-scroll-target="#step-5-evaluating-the-model"><span class="header-section-number">3.5</span> Step 5: Evaluating the model</a></li>
   </ul>
@@ -265,8 +270,8 @@ Available layers:
 <p>Feature engineering is a crucial step in preparing data for analysis and modeling. It involves creating new variables, or features, that capture important patterns or relationships in the data. Well-designed features can enhance the performance of machine learning models by making the relevant information more accessible.</p>
 <p>In this task, we aim to enrich the GPS dataset with features derived from the spatial and temporal relationships between consecutive points within each trajectory. Specifically, we will compute metrics such as the distance between consecutive points (step length), the time difference between consecutive timestamps (time lag), and the average speed over these intervals. These features provide valuable insights into movement behavior and are essential for distinguishing between different transportation modes.</p>
 <p>By engineering these features, we transform raw GPS data into a more informative format, setting the stage for building predictive models.</p>
-<section id="speed" class="level4" data-number="3.3.0.1">
-<h4 data-number="3.3.0.1" class="anchored" data-anchor-id="speed"><span class="header-section-number">3.3.0.1</span> Speed</h4>
+<section id="speed" class="level3" data-number="3.3.1">
+<h3 data-number="3.3.1" class="anchored" data-anchor-id="speed"><span class="header-section-number">3.3.1</span> Speed</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>full_dataset <span class="ot">&lt;-</span> full_dataset <span class="sc">|&gt;</span> </span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
@@ -307,8 +312,8 @@ Figure&nbsp;3.1: Average speed per segment for different transportation modes.
 </div>
 <p>Note that <a href="#fig-speed-average" class="quarto-xref">Figure&nbsp;<span>3.1</span></a> shows that the average speed <em>per segment</em> varies significantly between different transportation modes. This information can be used to distinguish between modes based on speed-related features on a <em>per segment</em> basis. However, this might not help to distinguish transport mode on a <em>per point</em> basis.</p>
 </section>
-<section id="acceleration" class="level4" data-number="3.3.0.2">
-<h4 data-number="3.3.0.2" class="anchored" data-anchor-id="acceleration"><span class="header-section-number">3.3.0.2</span> Acceleration</h4>
+<section id="acceleration" class="level3" data-number="3.3.2">
+<h3 data-number="3.3.2" class="anchored" data-anchor-id="acceleration"><span class="header-section-number">3.3.2</span> Acceleration</h3>
 <p>Acceleration, the rate of change in speed over time, is a valuable feature for understanding movement dynamics. Unlike speed, which provides information about the magnitude of motion, acceleration captures changes in motion - whether an object is speeding up, slowing down, or maintaining a constant velocity.</p>
 <p>This feature is particularly useful for distinguishing transportation modes. For example, walking and cycling often exhibit more frequent changes in acceleration compared to driving or taking a bus, which tend to involve smoother transitions in speed. By incorporating acceleration into our analysis, we gain a deeper understanding of movement patterns and improve the ability to differentiate between modes of transportation.</p>
 <div class="cell">
@@ -346,8 +351,8 @@ Figure&nbsp;3.2: Average acceleration per segment for different transportation m
 </div>
 </div>
 </section>
-<section id="sinuosity" class="level4" data-number="3.3.0.3">
-<h4 data-number="3.3.0.3" class="anchored" data-anchor-id="sinuosity"><span class="header-section-number">3.3.0.3</span> Sinuosity</h4>
+<section id="sinuosity" class="level3" data-number="3.3.3">
+<h3 data-number="3.3.3" class="anchored" data-anchor-id="sinuosity"><span class="header-section-number">3.3.3</span> Sinuosity</h3>
 <p>Sinuosity is a measure of the curvature of a path, and can be defined as the ratio between the actual traveled distance and the straight-line distance between the start and end points. A perfectly straight path has a sinuosity of 1, while more winding paths have higher sinuosity values.</p>
 <p>This feature provides valuable insights into movement behavior, as different transportation modes often exhibit distinct patterns of sinuosity. For instance, walking and cycling paths may have higher sinuosity due to detours or obstacles, while driving or taking a train tends to follow straighter routes. By incorporating sinuosity into the analysis, we can enhance the ability to classify transportation modes based on their characteristic movement patterns.</p>
 <p>To calculate <em>sinuosity</em>, we must first specify an observation window. In this case, we will consider the sinuosity over the next 5 points of each trajectory. This window size allows us to capture the curvature of the path while avoiding excessive noise from individual points. We will compute the straight-line distance between the current point and the point 5 steps ahead, as well as the total distance traveled over these 5 steps. The sinuosity is then calculated as the ratio between these two distances.</p>
