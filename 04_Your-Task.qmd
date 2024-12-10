@@ -1,0 +1,10 @@
+## Your task
+
+
+Your task is to improve upon the simple model we have built. You can do this by:
+
+1. **Feature Engineering**: Create additional features that you think might help to distinguish between different transportation modes. For example, you could consider turning angles, stop durations or extending observation windows
+2. **Model Selection**: Experiment with different models (e.g., random forests, gradient boosting, neural networks) and hyperparameters to improve the predictive performance.
+3. **Per point prediction**: Instead of predicting the transportation mode on a per segment basis, try to predict the transportation mode for each point. This is a more challenging task but can provide more detailed insights into the movement behavior.
+
+Using one or more of these approaches, predict the transportation mode for the *validation* dataset. Next week, we will evaluate the performance of your models and award the best performing team with a standing ovation. 

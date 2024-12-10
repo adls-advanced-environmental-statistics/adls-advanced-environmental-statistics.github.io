@@ -1,0 +1,31 @@
+project:
+  type: book
+
+book:
+  title: "Transport Mode Detection"
+  subtitle: "Advanced Environmental Statistics"
+  author: 
+  - Nils Ratnaweera
+  - Patrick Laube
+  chapters:
+    - index.qmd
+    - 02_Data-Description.qmd
+    - 03_Step-by-Step-Instructions.qmd
+    - 04_Your-Task.qmd
+    - 05_References.qmd
+
+bibliography: bibliography.bib
+
+format: 
+  html:
+    toc: true
+    number_sections: false
+
+
+
+
+execute: 
+  warning: false
+  eval: true
+  message: false
+  cache: true
